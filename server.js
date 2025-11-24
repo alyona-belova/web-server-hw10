@@ -5,12 +5,7 @@ const mongoose = require('mongoose');
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const userSchema = new mongoose.Schema({
-  login: String,
-  password: String
-}, { collection: 'users' });
-
-let User;
+let User = null;
 
 app.get('/login/', (req, res) => {
   res.send("27a51f8a-d703-492b-9fe6-b1d0e877d2ad");
@@ -24,25 +19,28 @@ app.post('/insert/', async (req, res) => {
   }
 
   try {
-    const conn = await mongoose.createConnection(URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
+    if (!User) {
+      const conn = await mongoose.createConnection(URL, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+      });
 
-    User = conn.model("User", userSchema);
+      const userSchema = new mongoose.Schema({
+        login: String,
+        password: String
+      }, { collection: 'users' });
 
-    const doc = new User({ login, password });
-    await doc.save();
+      User = conn.model("User", userSchema);
+    }
 
+    await new User({ login, password }).save();
     res.send("Inserted");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error: " + err.message);
+
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Error: " + e.message);
   }
 });
 
 const PORT = process.env.PORT || 10000;
-
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
-});
+app.listen(PORT, () => console.log("Server OK " + PORT));
